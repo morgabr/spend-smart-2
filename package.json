@@ -1,0 +1,27 @@
+{
+  "name": "spend-smart",
+  "version": "1.0.0",
+  "description": "A web app that helps users manage their personal finances by providing a clear view of their financial future",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "eslint": "^8.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+} 
