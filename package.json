@@ -16,7 +16,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "npm run type-check --workspaces",
-    "clean": "npm run clean --workspaces"
+    "commit": "cz",
+    "clean": "npm run clean --workspaces",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "prettier": "^3.0.0",
@@ -26,10 +28,19 @@
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "husky": "^8.0.0",
-    "lint-staged": "^13.0.0"
+    "lint-staged": "^13.0.0",
+    "@commitlint/cli": "^17.7.1",
+    "@commitlint/config-conventional": "^17.7.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
