@@ -12,6 +12,8 @@
   - Ensure pull requests and issues use their respective templates for consistency
 - After every significant change is completed, agents must execute all unit tests and verify that
   they pass before considering the change complete.
+- All commits must be made using the Commit feature in Cursor, to ensure that commit messages are
+  AI-generated and thorough. Direct command-line commits are not permitted.
 
 ---
 

@@ -5,8 +5,8 @@
 1. [x] Initialize monorepo structure (frontend, backend, shared)
 2. [x] Set up version control (Git) and repository (e.g., GitHub)
 3. [x] Configure code formatting and linting (Prettier, ESLint)
-4. [ ] Set up commit hooks (Husky, lint-staged)
-5. [ ] Configure environment variable management
+4. [x] Set up commit hooks (Husky, lint-staged)
+5. [x] Configure environment variable management
 6. [ ] Set up CI/CD pipeline (build, test, deploy)
 7. [ ] Write initial README and contribution guidelines
 8. [ ] Set up issue templates and project board
