@@ -26,7 +26,7 @@ export enum AccountType {
   CREDIT = 'credit',
   LOAN = 'loan',
   INVESTMENT = 'investment',
-  RETIREMENT = 'retirement'
+  RETIREMENT = 'retirement',
 }
 
 // Transaction types
@@ -62,7 +62,7 @@ export enum BudgetPeriod {
   MONTHLY = 'monthly',
   QUARTERLY = 'quarterly',
   YEARLY = 'yearly',
-  ONE_TIME = 'one_time'
+  ONE_TIME = 'one_time',
 }
 
 // Goal types
@@ -84,4 +84,4 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
-} 
+}

@@ -1,5 +1,8 @@
 // Currency formatting utility
-export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
+export const formatCurrency = (
+  amount: number,
+  currency: string = 'USD'
+): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
@@ -36,27 +39,43 @@ export const DEFAULT_CATEGORIES = [
   'Education',
   'Travel',
   'Income',
-  'Other'
+  'Other',
 ] as const;
 
 export const categorizeTransaction = (description: string): string => {
   const desc = description.toLowerCase();
-  
-  if (desc.includes('restaurant') || desc.includes('food') || desc.includes('grocery')) {
+
+  if (
+    desc.includes('restaurant') ||
+    desc.includes('food') ||
+    desc.includes('grocery')
+  ) {
     return 'Food & Dining';
   }
   if (desc.includes('gas') || desc.includes('uber') || desc.includes('taxi')) {
     return 'Transportation';
   }
-  if (desc.includes('amazon') || desc.includes('store') || desc.includes('shop')) {
+  if (
+    desc.includes('amazon') ||
+    desc.includes('store') ||
+    desc.includes('shop')
+  ) {
     return 'Shopping';
   }
-  if (desc.includes('netflix') || desc.includes('spotify') || desc.includes('movie')) {
+  if (
+    desc.includes('netflix') ||
+    desc.includes('spotify') ||
+    desc.includes('movie')
+  ) {
     return 'Entertainment';
   }
-  if (desc.includes('electric') || desc.includes('water') || desc.includes('internet')) {
+  if (
+    desc.includes('electric') ||
+    desc.includes('water') ||
+    desc.includes('internet')
+  ) {
     return 'Bills & Utilities';
   }
-  
+
   return 'Other';
-}; 
+};

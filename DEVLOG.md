@@ -8,4 +8,4 @@ A chronological journal of development activities, decisions, and notes.
 
 - Project initialized.
 - Set up project planning and checklist.
-- Established workflow for detailed record-keeping. 
+- Established workflow for detailed record-keeping.

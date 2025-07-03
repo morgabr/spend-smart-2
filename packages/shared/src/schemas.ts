@@ -95,10 +95,13 @@ export const DateRangeSchema = z.object({
   endDate: z.string().datetime().optional(),
 });
 
-export const TransactionFilterSchema = z.object({
-  accountId: z.string().uuid().optional(),
-  category: z.string().optional(),
-  minAmount: z.coerce.number().optional(),
-  maxAmount: z.coerce.number().optional(),
-  search: z.string().optional(),
-}).merge(DateRangeSchema).merge(PaginationSchema); 
+export const TransactionFilterSchema = z
+  .object({
+    accountId: z.string().uuid().optional(),
+    category: z.string().optional(),
+    minAmount: z.coerce.number().optional(),
+    maxAmount: z.coerce.number().optional(),
+    search: z.string().optional(),
+  })
+  .merge(DateRangeSchema)
+  .merge(PaginationSchema);

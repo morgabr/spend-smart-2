@@ -3,8 +3,8 @@
 ## 1. Project Setup
 
 1. [x] Initialize monorepo structure (frontend, backend, shared)
-2. [ ] Set up version control (Git) and repository (e.g., GitHub)
-3. [ ] Configure code formatting and linting (Prettier, ESLint)
+2. [x] Set up version control (Git) and repository (e.g., GitHub)
+3. [x] Configure code formatting and linting (Prettier, ESLint)
 4. [ ] Set up commit hooks (Husky, lint-staged)
 5. [ ] Configure environment variable management
 6. [ ] Set up CI/CD pipeline (build, test, deploy)
@@ -56,7 +56,8 @@
 
 ### 2.7 Reporting & Dashboard
 
-32. [ ] Implement endpoints for dashboard metrics (net worth, balances, income/expenses, savings rate)
+32. [ ] Implement endpoints for dashboard metrics (net worth, balances, income/expenses, savings
+        rate)
 33. [ ] Add endpoints for chart data (pie, bar, line, cumulative)
 
 ### 2.8 Notifications
@@ -173,4 +174,4 @@
 87. [ ] Push notifications (mobile app phase)
 88. [ ] Role-based permissions for collaboration
 89. [ ] Export reports to PDF/CSV
-90. [ ] Mobile apps (iOS and Android) 
+90. [ ] Mobile apps (iOS and Android)
