@@ -31,6 +31,11 @@ model User {
   googleId String? @unique
   appleId  String? @unique
 
+  // Role-based access control
+  role UserRole @default(USER)
+  isActive Boolean @default(true)
+  lastLoginAt DateTime?
+
   // User preferences
   baseCurrency String @default("USD")
   timezone     String @default("UTC")
@@ -236,4 +241,11 @@ enum GoalType {
   INVESTMENT
   EMERGENCY_FUND
   OTHER
+}
+
+enum UserRole {
+  USER        // Regular user with access to their own data
+  MODERATOR   // Can moderate content, view user activity  
+  ADMIN       // Full system access, user management
+  SUPER_ADMIN // System administration, billing, etc.
 }

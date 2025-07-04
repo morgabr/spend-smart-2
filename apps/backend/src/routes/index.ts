@@ -1,4 +1,5 @@
 import { Request, Response, Router } from 'express';
+import adminRoutes from './admin';
 import authRoutes from './auth';
 
 const router = Router();
@@ -47,6 +48,9 @@ router.get('/status', (_req: Request, res: Response) => {
 
 // Route groups
 router.use('/auth', authRoutes);
+
+// Admin routes
+router.use('/admin', adminRoutes);
 
 // TODO: Add additional route groups when implementing features
 // router.use('/accounts', accountRoutes);

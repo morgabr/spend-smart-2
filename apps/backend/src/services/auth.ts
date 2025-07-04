@@ -1,13 +1,15 @@
-import { PrismaClient, User } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import { authConfig } from '../config/env';
 import {
   comparePassword,
   generateTokens,
   hashPassword,
   validateEmail,
-  validatePasswordStrength,
+  validatePassword,
 } from '../utils/auth';
-
-const prisma = new PrismaClient();
+import { getDefaultRole } from '../utils/roles';
+import { prisma } from './database';
 
 export interface RegisterData {
   email: string;
@@ -21,13 +23,25 @@ export interface LoginData {
 }
 
 export interface AuthResult {
-  user: Omit<User, 'passwordHash' | 'refreshToken'>;
+  user: UserWithoutSensitiveData;
   accessToken: string;
   refreshToken: string;
 }
 
-export interface UserWithoutSensitiveData
-  extends Omit<User, 'passwordHash' | 'refreshToken'> {}
+export interface UserWithoutSensitiveData {
+  id: string;
+  email: string;
+  name: string | null;
+  avatar: string | null;
+  role: UserRole;
+  isActive: boolean;
+  lastLoginAt: Date | null;
+  emailVerified: boolean;
+  baseCurrency: string;
+  timezone: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export interface GoogleUserData {
   googleId: string;
@@ -46,11 +60,10 @@ export class AuthService {
       throw new Error('Invalid email format');
     }
 
-    // Validate password strength
-    const passwordValidation = validatePasswordStrength(password);
-    if (!passwordValidation.isValid) {
+    // Validate password
+    if (!validatePassword(password)) {
       throw new Error(
-        `Password validation failed: ${passwordValidation.errors.join(', ')}`
+        'Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character'
       );
     }
 
@@ -66,12 +79,13 @@ export class AuthService {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Create user
+    // Create user with default role
     const user = await prisma.user.create({
       data: {
         email,
         name,
         passwordHash,
+        role: getDefaultRole(),
       },
     });
 
@@ -79,13 +93,16 @@ export class AuthService {
     const tokens = generateTokens({
       userId: user.id,
       email: user.email,
-      role: 'user', // Default role
+      role: user.role,
     });
 
     // Store refresh token
     await prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken: tokens.refreshToken },
+      data: {
+        refreshToken: tokens.refreshToken,
+        lastLoginAt: new Date(),
+      },
     });
 
     // Return user without sensitive data
@@ -96,7 +113,7 @@ export class AuthService {
     } = user;
 
     return {
-      user: userWithoutSensitiveData,
+      user: { ...userWithoutSensitiveData, role: user.role },
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
@@ -121,17 +138,25 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      throw new Error('Account is deactivated');
+    }
+
     // Generate tokens
     const tokens = generateTokens({
       userId: user.id,
       email: user.email,
-      role: 'user',
+      role: user.role,
     });
 
     // Store refresh token
     await prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken: tokens.refreshToken },
+      data: {
+        refreshToken: tokens.refreshToken,
+        lastLoginAt: new Date(),
+      },
     });
 
     // Return user without sensitive data
@@ -149,28 +174,57 @@ export class AuthService {
   }
 
   // Refresh access token
-  static async refreshToken(
-    refreshToken: string
-  ): Promise<{ accessToken: string }> {
-    // Find user by refresh token
-    const user = await prisma.user.findFirst({
-      where: { refreshToken },
-    });
+  static async refreshToken(refreshToken: string): Promise<AuthResult> {
+    try {
+      // Verify refresh token
+      const decoded = jwt.verify(refreshToken, authConfig.jwtSecret) as {
+        userId: string;
+        email: string;
+        role: UserRole;
+      };
 
-    if (!user) {
+      // Find user and verify stored refresh token
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+      });
+
+      if (!user || user.refreshToken !== refreshToken) {
+        throw new Error('Invalid refresh token');
+      }
+
+      // Check if user is active
+      if (!user.isActive) {
+        throw new Error('Account is deactivated');
+      }
+
+      // Generate new tokens
+      const tokens = generateTokens({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      });
+
+      // Update refresh token in database
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { refreshToken: tokens.refreshToken },
+      });
+
+      // Return user data without sensitive fields
+      const {
+        passwordHash: _,
+        refreshToken: __,
+        ...userWithoutSensitiveData
+      } = user;
+
+      return {
+        user: userWithoutSensitiveData,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+    } catch (error) {
       throw new Error('Invalid refresh token');
     }
-
-    // Generate new access token
-    const tokens = generateTokens({
-      userId: user.id,
-      email: user.email,
-      role: 'user',
-    });
-
-    return {
-      accessToken: tokens.accessToken,
-    };
   }
 
   // Logout user
@@ -242,11 +296,10 @@ export class AuthService {
       throw new Error('Current password is incorrect');
     }
 
-    // Validate new password strength
-    const passwordValidation = validatePasswordStrength(newPassword);
-    if (!passwordValidation.isValid) {
+    // Validate new password
+    if (!validatePassword(newPassword)) {
       throw new Error(
-        `Password validation failed: ${passwordValidation.errors.join(', ')}`
+        'New password must be at least 8 characters long and contain uppercase, lowercase, number, and special character'
       );
     }
 
@@ -337,6 +390,7 @@ export class AuthService {
         name: data.name,
         avatar: data.avatar,
         emailVerified: true, // Google emails are pre-verified
+        role: getDefaultRole(),
       },
     });
 
@@ -351,23 +405,191 @@ export class AuthService {
   static async googleLogin(
     user: UserWithoutSensitiveData
   ): Promise<AuthResult> {
+    // Check if user is active
+    if (!user.isActive) {
+      throw new Error('Account is deactivated');
+    }
+
     // Generate tokens
     const tokens = generateTokens({
       userId: user.id,
       email: user.email,
-      role: 'user',
+      role: user.role,
     });
 
     // Store refresh token
     await prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken: tokens.refreshToken },
+      data: {
+        refreshToken: tokens.refreshToken,
+        lastLoginAt: new Date(),
+      },
     });
 
     return {
       user,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+    };
+  }
+
+  // User management methods (for admin use)
+  static async getAllUsers(
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+  ): Promise<{
+    users: UserWithoutSensitiveData[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const offset = (page - 1) * limit;
+
+    const whereCondition = search
+      ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { name: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where: whereCondition,
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.user.count({ where: whereCondition }),
+    ]);
+
+    const usersWithoutSensitiveData = users.map(user => {
+      const {
+        passwordHash: _,
+        refreshToken: __,
+        ...userWithoutSensitiveData
+      } = user;
+      return userWithoutSensitiveData;
+    });
+
+    return {
+      users: usersWithoutSensitiveData,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  static async updateUserRole(
+    userId: string,
+    newRole: UserRole
+  ): Promise<UserWithoutSensitiveData> {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole },
+    });
+
+    const {
+      passwordHash: _,
+      refreshToken: __,
+      ...userWithoutSensitiveData
+    } = user;
+    return userWithoutSensitiveData;
+  }
+
+  static async deactivateUser(
+    userId: string
+  ): Promise<UserWithoutSensitiveData> {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: false },
+    });
+
+    const {
+      passwordHash: _,
+      refreshToken: __,
+      ...userWithoutSensitiveData
+    } = user;
+    return userWithoutSensitiveData;
+  }
+
+  static async reactivateUser(
+    userId: string
+  ): Promise<UserWithoutSensitiveData> {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: true },
+    });
+
+    const {
+      passwordHash: _,
+      refreshToken: __,
+      ...userWithoutSensitiveData
+    } = user;
+    return userWithoutSensitiveData;
+  }
+
+  // System statistics (for admin dashboard)
+  static async getSystemStats(): Promise<{
+    totalUsers: number;
+    activeUsers: number;
+    usersByRole: Record<UserRole, number>;
+    recentRegistrations: number;
+    deactivatedUsers: number;
+  }> {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Get total users
+    const totalUsers = await prisma.user.count();
+
+    // Get active users
+    const activeUsers = await prisma.user.count({
+      where: { isActive: true },
+    });
+
+    // Get users by role
+    const usersByRole = await prisma.user.groupBy({
+      by: ['role'],
+      _count: {
+        id: true,
+      },
+    });
+
+    // Convert to record format
+    const roleStats: Record<UserRole, number> = {
+      USER: 0,
+      MODERATOR: 0,
+      ADMIN: 0,
+      SUPER_ADMIN: 0,
+    };
+
+    usersByRole.forEach(group => {
+      roleStats[group.role] = group._count.id;
+    });
+
+    // Get recent registrations (last 30 days)
+    const recentRegistrations = await prisma.user.count({
+      where: {
+        createdAt: {
+          gte: thirtyDaysAgo,
+        },
+      },
+    });
+
+    // Get deactivated users
+    const deactivatedUsers = await prisma.user.count({
+      where: { isActive: false },
+    });
+
+    return {
+      totalUsers,
+      activeUsers,
+      usersByRole: roleStats,
+      recentRegistrations,
+      deactivatedUsers,
     };
   }
 }

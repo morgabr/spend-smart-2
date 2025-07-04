@@ -1,11 +1,12 @@
-import bcrypt from 'bcryptjs';
+import { UserRole } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../config/env';
 
 export interface TokenPayload {
   userId: string;
   email: string;
-  role: string;
+  role: UserRole;
 }
 
 export interface TokenPair {
@@ -13,14 +14,14 @@ export interface TokenPair {
   refreshToken: string;
 }
 
-// JWT Token Generation
+// Generate JWT tokens
 export const generateTokens = (payload: TokenPayload): TokenPair => {
   const accessToken = jwt.sign(payload, authConfig.jwtSecret, {
-    expiresIn: '15m', // Short-lived access token
+    expiresIn: '15m',
   });
 
   const refreshToken = jwt.sign(payload, authConfig.jwtSecret, {
-    expiresIn: '7d', // Longer-lived refresh token
+    expiresIn: '7d',
   });
 
   return { accessToken, refreshToken };
@@ -36,17 +37,42 @@ export const verifyToken = (token: string): TokenPayload => {
   return jwt.verify(token, authConfig.jwtSecret) as TokenPayload;
 };
 
-// Password Hashing
+// Hash password
 export const hashPassword = async (password: string): Promise<string> => {
   const saltRounds = 12;
-  return bcrypt.hash(password, saltRounds);
+  return await bcrypt.hash(password, saltRounds);
 };
 
+// Compare password
 export const comparePassword = async (
   password: string,
-  hashedPassword: string
+  hash: string
 ): Promise<boolean> => {
-  return bcrypt.compare(password, hashedPassword);
+  return await bcrypt.compare(password, hash);
+};
+
+// Validate password strength
+export const validatePassword = (password: string): boolean => {
+  // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+};
+
+// Alternative name for compatibility
+export const validatePasswordStrength = validatePassword;
+
+// Validate email format
+export const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Generate secure random token
+export const generateSecureToken = (): string => {
+  return jwt.sign({ random: Math.random() }, authConfig.jwtSecret, {
+    expiresIn: '1h',
+  });
 };
 
 // Token Validation
@@ -60,45 +86,4 @@ export const isTokenExpired = (token: string): boolean => {
   } catch (error) {
     return true;
   }
-};
-
-// Password Strength Validation
-export const validatePasswordStrength = (
-  password: string
-): {
-  isValid: boolean;
-  errors: string[];
-} => {
-  const errors: string[] = [];
-
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long');
-  }
-
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase letter');
-  }
-
-  if (!/[a-z]/.test(password)) {
-    errors.push('Password must contain at least one lowercase letter');
-  }
-
-  if (!/\d/.test(password)) {
-    errors.push('Password must contain at least one number');
-  }
-
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    errors.push('Password must contain at least one special character');
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
-};
-
-// Email Validation
-export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
 };

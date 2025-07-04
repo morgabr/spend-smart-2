@@ -17,8 +17,8 @@
 
 9. [x] Scaffold Node.js + Express backend
 10. [x] Set up PostgreSQL database and ORM (e.g., Prisma/Sequelize/TypeORM)
-11. [ ] Implement secure authentication (JWT, OAuth for Google/Apple, email/password)
-12. [ ] Set up user model and roles
+11. [x] Implement secure authentication (JWT, OAuth for Google/Apple, email/password)
+12. [x] Set up user model and roles
 13. [ ] Implement GDPR-compliant data handling and consent flow
 14. [ ] Set up logging and monitoring (e.g., Sentry, LogRocket)
 15. [ ] Configure HTTPS and secure token handling

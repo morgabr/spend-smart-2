@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Joi from 'joi';
 import passport from 'passport';
 import { AuthenticatedRequest } from '../middleware/auth';
-import AuthService from '../services/auth';
+import { AuthService } from '../services/auth';
 
 // Validation schemas
 const registerSchema = Joi.object({
