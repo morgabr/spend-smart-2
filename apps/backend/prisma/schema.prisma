@@ -1,0 +1,238 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and profile
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Authentication fields
+  passwordHash String?
+  emailVerified Boolean @default(false)
+  
+  // OAuth fields
+  googleId String? @unique
+  appleId  String? @unique
+
+  // User preferences
+  baseCurrency String @default("USD")
+  timezone     String @default("UTC")
+
+  // Relationships
+  accounts     Account[]
+  transactions Transaction[]
+  budgets      Budget[]
+  goals        Goal[]
+  linkedUsers  UserLink[] @relation("LinkedUsers")
+  linkerUsers  UserLink[] @relation("LinkerUsers")
+
+  @@map("users")
+}
+
+// User linking for shared access
+model UserLink {
+  id       String @id @default(cuid())
+  linkerId String
+  linkedId String
+  
+  linker   User @relation("LinkerUsers", fields: [linkerId], references: [id], onDelete: Cascade)
+  linked   User @relation("LinkedUsers", fields: [linkedId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([linkerId, linkedId])
+  @@map("user_links")
+}
+
+// Financial accounts (checking, savings, credit, etc.)
+model Account {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  type      AccountType
+  subtype   String?
+  
+  // Account details
+  institutionName String?
+  accountNumber   String?
+  routingNumber   String?
+  
+  // Balances and currency
+  currentBalance Decimal @default(0)
+  availableBalance Decimal?
+  currency       String @default("USD")
+  
+  // Tink integration
+  tinkAccountId String? @unique
+  
+  // Metadata
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  goals        Goal[]
+  
+  @@map("accounts")
+}
+
+// Transaction records
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  accountId String
+  
+  // Transaction details
+  amount      Decimal
+  description String
+  date        DateTime
+  
+  // Categorization
+  category         String?
+  subcategory      String?
+  categoryOverride Boolean @default(false)
+  
+  // Transaction metadata
+  merchantName String?
+  reference    String?
+  notes        String?
+  tags         String[] @default([])
+  
+  // Recurring transaction detection
+  isRecurring      Boolean @default(false)
+  recurringGroupId String?
+  frequency        RecurrenceFrequency?
+  isDiscretionary  Boolean @default(true)
+  
+  // External data
+  tinkTransactionId String? @unique
+  
+  // Attachments and files
+  attachments String[] @default([])
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  @@map("transactions")
+}
+
+// Budget management
+model Budget {
+  id     String @id @default(cuid())
+  userId String
+  
+  // Budget details
+  name        String
+  category    String
+  amount      Decimal
+  period      BudgetPeriod
+  isRecurring Boolean @default(true)
+  
+  // Date range
+  startDate DateTime
+  endDate   DateTime?
+  
+  // Progress tracking
+  spent    Decimal @default(0)
+  isActive Boolean @default(true)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("budgets")
+}
+
+// Financial goals (savings, debt reduction, etc.)
+model Goal {
+  id        String @id @default(cuid())
+  userId    String
+  accountId String?
+  
+  // Goal details
+  name        String
+  description String?
+  type        GoalType
+  targetAmount Decimal
+  currentAmount Decimal @default(0)
+  
+  // Timeline
+  targetDate DateTime?
+  
+  // Progress tracking
+  isActive   Boolean @default(true)
+  isAchieved Boolean @default(false)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  
+  @@map("goals")
+}
+
+// Enums
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  INVESTMENT
+  RETIREMENT
+  LOAN
+  MORTGAGE
+  OTHER
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM
+}
+
+enum GoalType {
+  SAVINGS
+  DEBT_REDUCTION
+  INVESTMENT
+  EMERGENCY_FUND
+  OTHER
+}

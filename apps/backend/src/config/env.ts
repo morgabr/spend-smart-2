@@ -17,6 +17,7 @@ const envFiles = [
 // Load environment files from root directory
 for (const envFile of envFiles) {
   const envPath = path.resolve(process.cwd(), '../../', envFile);
+
   dotenv.config({ path: envPath, override: false });
 }
 
@@ -51,6 +52,14 @@ export const serverConfig = {
   port: env.PORT,
   apiPrefix: env.API_PREFIX,
   corsOrigin: env.CORS_ORIGIN,
+};
+
+export const corsConfig = {
+  origin: env.CORS_ORIGIN,
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 
 // Log configuration on startup (excluding sensitive data)

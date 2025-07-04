@@ -7,16 +7,16 @@
 3. [x] Configure code formatting and linting (Prettier, ESLint)
 4. [x] Set up commit hooks (Husky, lint-staged)
 5. [x] Configure environment variable management
-6. [ ] Set up CI/CD pipeline (build, test, deploy)
-7. [ ] Write initial README and contribution guidelines
-8. [ ] Set up issue templates and project board
+6. [x] Set up CI/CD pipeline (build, test, deploy)
+7. [x] Write initial README and contribution guidelines
+8. [x] Set up issue templates and project board
 
 ## 2. Backend Development
 
 ### 2.1 Core Infrastructure
 
-9. [ ] Scaffold Node.js + Express backend
-10. [ ] Set up PostgreSQL database and ORM (e.g., Prisma/Sequelize/TypeORM)
+9. [x] Scaffold Node.js + Express backend
+10. [x] Set up PostgreSQL database and ORM (e.g., Prisma/Sequelize/TypeORM)
 11. [ ] Implement secure authentication (JWT, OAuth for Google/Apple, email/password)
 12. [ ] Set up user model and roles
 13. [ ] Implement GDPR-compliant data handling and consent flow
@@ -85,8 +85,8 @@
 
 ### 3.1 Core Infrastructure
 
-43. [ ] Scaffold React.js app with Tailwind CSS
-44. [ ] Set up routing, state management, and API client
+43. [x] Scaffold React.js app with Tailwind CSS
+44. [x] Set up routing, state management, and API client
 45. [ ] Implement authentication flows (Google, Apple, email/password)
 46. [ ] Set up secure storage for tokens
 
