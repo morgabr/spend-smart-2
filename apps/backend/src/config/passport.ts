@@ -32,6 +32,7 @@ passport.use(
             userByEmail.id,
             profile.id
           );
+
           return done(null, updatedUser);
         }
 
@@ -46,6 +47,7 @@ passport.use(
         return done(null, newUser);
       } catch (error) {
         console.error('Google OAuth error:', error);
+
         return done(error, false);
       }
     }
@@ -53,14 +55,15 @@ passport.use(
 );
 
 // Serialize user for session
-passport.serializeUser((user: any, done) => {
-  done(null, user.id);
+passport.serializeUser((user: unknown, done) => {
+  done(null, (user as { id: string }).id);
 });
 
 // Deserialize user from session
 passport.deserializeUser(async (id: string, done) => {
   try {
     const user = await AuthService.getUserById(id);
+
     done(null, user);
   } catch (error) {
     done(error, null);

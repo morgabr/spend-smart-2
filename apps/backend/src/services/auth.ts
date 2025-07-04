@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { User, UserRole } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../config/env';
@@ -107,7 +108,9 @@ export class AuthService {
 
     // Return user without sensitive data
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       passwordHash: _,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
@@ -134,6 +137,7 @@ export class AuthService {
 
     // Verify password
     const isPasswordValid = await comparePassword(password, user.passwordHash);
+
     if (!isPasswordValid) {
       throw new Error('Invalid credentials');
     }
@@ -161,7 +165,9 @@ export class AuthService {
 
     // Return user without sensitive data
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       passwordHash: _,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
@@ -212,7 +218,9 @@ export class AuthService {
 
       // Return user data without sensitive fields
       const {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         passwordHash: _,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         refreshToken: __,
         ...userWithoutSensitiveData
       } = user;
@@ -248,10 +256,13 @@ export class AuthService {
     }
 
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       passwordHash: _,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -266,10 +277,13 @@ export class AuthService {
     });
 
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       passwordHash: _,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -292,6 +306,7 @@ export class AuthService {
       currentPassword,
       user.passwordHash
     );
+
     if (!isCurrentPasswordValid) {
       throw new Error('Current password is incorrect');
     }
@@ -341,6 +356,7 @@ export class AuthService {
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -360,6 +376,7 @@ export class AuthService {
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -377,6 +394,7 @@ export class AuthService {
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -399,6 +417,7 @@ export class AuthService {
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -471,6 +490,7 @@ export class AuthService {
         refreshToken: __,
         ...userWithoutSensitiveData
       } = user;
+
       return userWithoutSensitiveData;
     });
 
@@ -496,6 +516,7 @@ export class AuthService {
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -512,6 +533,7 @@ export class AuthService {
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 
@@ -528,6 +550,7 @@ export class AuthService {
       refreshToken: __,
       ...userWithoutSensitiveData
     } = user;
+
     return userWithoutSensitiveData;
   }
 

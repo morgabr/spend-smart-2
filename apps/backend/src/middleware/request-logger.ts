@@ -22,7 +22,8 @@ export const requestLogger = (
 
   // Override res.json to log response
   const originalJson = res.json;
-  res.json = function (body: any) {
+
+  res.json = function (body: unknown) {
     const responseTime = Date.now() - startTime;
     const statusCode = res.statusCode;
 
@@ -44,7 +45,8 @@ export const requestLogger = (
 
   // Override res.send to log response
   const originalSend = res.send;
-  res.send = function (body: any) {
+
+  res.send = function (body: unknown) {
     const responseTime = Date.now() - startTime;
     const statusCode = res.statusCode;
 

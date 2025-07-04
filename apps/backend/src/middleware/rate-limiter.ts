@@ -21,6 +21,7 @@ const RATE_LIMIT_MAX_REQUESTS = parseInt(
 setInterval(
   () => {
     const now = Date.now();
+
     Object.keys(store).forEach(key => {
       if (store[key].resetTime < now) {
         delete store[key];
@@ -86,8 +87,9 @@ export const rateLimiter = (
       retryAfter: Math.ceil((store[clientId].resetTime - now) / 1000),
       limit: RATE_LIMIT_MAX_REQUESTS,
       remaining: 0,
-      resetTime: resetTime,
+      resetTime,
     });
+
     return;
   }
 

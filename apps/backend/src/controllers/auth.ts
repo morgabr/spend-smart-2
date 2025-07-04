@@ -37,6 +37,7 @@ export class AuthController {
   static async register(req: Request, res: Response): Promise<Response | void> {
     try {
       const { error, value } = registerSchema.validate(req.body);
+
       if (error) {
         return res.status(400).json({
           error: 'Validation error',
@@ -63,6 +64,7 @@ export class AuthController {
   static async login(req: Request, res: Response): Promise<Response | void> {
     try {
       const { error, value } = loginSchema.validate(req.body);
+
       if (error) {
         return res.status(400).json({
           error: 'Validation error',
@@ -92,6 +94,7 @@ export class AuthController {
   ): Promise<Response | void> {
     try {
       const { error, value } = refreshTokenSchema.validate(req.body);
+
       if (error) {
         return res.status(400).json({
           error: 'Validation error',
@@ -155,6 +158,7 @@ export class AuthController {
       }
 
       const user = await AuthService.getUserById(req.user.id);
+
       if (!user) {
         return res.status(404).json({
           error: 'User not found',
@@ -189,6 +193,7 @@ export class AuthController {
       }
 
       const { error, value } = updateProfileSchema.validate(req.body);
+
       if (error) {
         return res.status(400).json({
           error: 'Validation error',
@@ -225,6 +230,7 @@ export class AuthController {
       }
 
       const { error, value } = changePasswordSchema.validate(req.body);
+
       if (error) {
         return res.status(400).json({
           error: 'Validation error',
@@ -286,7 +292,12 @@ export class AuthController {
   static async googleCallback(req: Request, res: Response): Promise<void> {
     try {
       // User is available from passport after successful authentication
-      const passportUser = req.user as any;
+      const passportUser = req.user as unknown as {
+        id: string;
+        email: string;
+        name: string;
+        avatar?: string;
+      };
 
       if (!passportUser) {
         return res.redirect(
@@ -294,11 +305,23 @@ export class AuthController {
         );
       }
 
+      // Find the user in the database first
+      const existingUser = await AuthService.findUserByEmail(
+        passportUser.email
+      );
+
+      if (!existingUser) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN}/login?error=user_not_found`
+        );
+      }
+
       // Generate tokens for the user
-      const authResult = await AuthService.googleLogin(passportUser);
+      const authResult = await AuthService.googleLogin(existingUser);
 
       // Redirect to frontend with tokens (in production, consider more secure methods)
       const redirectUrl = `${process.env.CORS_ORIGIN}/auth/success?token=${authResult.accessToken}&refresh=${authResult.refreshToken}`;
+
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('Google OAuth callback error:', error);

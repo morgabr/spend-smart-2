@@ -10,6 +10,7 @@ import {
 } from '../utils/roles';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface User {
       id: string;
@@ -48,6 +49,7 @@ export const authenticateToken = (
 
   try {
     const decoded = jwt.verify(token, authConfig.jwtSecret) as JwtPayload;
+
     req.user = {
       id: decoded.userId,
       email: decoded.email,
@@ -76,6 +78,7 @@ export const optionalAuth = (
 
   try {
     const decoded = jwt.verify(token, authConfig.jwtSecret) as JwtPayload;
+
     req.user = {
       id: decoded.userId,
       email: decoded.email,

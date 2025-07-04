@@ -108,6 +108,7 @@ const startServer = async () => {
         } catch (error) {
           console.log('Database was not connected');
         }
+        // eslint-disable-next-line node/no-process-exit, no-process-exit
         process.exit(0);
       });
     };
@@ -118,7 +119,7 @@ const startServer = async () => {
     return server;
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    throw new Error('Failed to start server');
   }
 };
 

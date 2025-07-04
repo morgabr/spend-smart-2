@@ -25,9 +25,11 @@ if (process.env.NODE_ENV === 'production') {
 export const checkDatabaseConnection = async (): Promise<boolean> => {
   try {
     await prisma.$queryRaw`SELECT 1`;
+
     return true;
   } catch (error) {
     console.error('Database connection check failed:', error);
+
     return false;
   }
 };
@@ -51,6 +53,7 @@ export const initializeDatabase = async (): Promise<void> => {
 
     // Run health check
     const isHealthy = await checkDatabaseConnection();
+
     if (!isHealthy) {
       throw new Error('Database health check failed');
     }

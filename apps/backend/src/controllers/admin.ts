@@ -75,6 +75,7 @@ export class AdminController {
 
       // Get target user to check current role
       const targetUser = await AuthService.getUserById(userId);
+
       if (!targetUser) {
         return res.status(404).json({
           error: 'User not found',
@@ -123,6 +124,7 @@ export class AdminController {
 
       // Get target user to check current role
       const targetUser = await AuthService.getUserById(userId);
+
       if (!targetUser) {
         return res.status(404).json({
           error: 'User not found',
@@ -172,6 +174,7 @@ export class AdminController {
 
       // Get target user to check current role
       const targetUser = await AuthService.getUserById(userId);
+
       if (!targetUser) {
         return res.status(404).json({
           error: 'User not found',
