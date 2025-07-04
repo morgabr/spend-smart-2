@@ -1,4 +1,5 @@
 import { Request, Response, Router } from 'express';
+import authRoutes from './auth';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.get('/status', (_req: Request, res: Response) => {
   res.json({
     message: 'API is running',
     features: {
-      authentication: 'Not implemented',
+      authentication: 'Implemented',
       accounts: 'Not implemented',
       transactions: 'Not implemented',
       budgets: 'Not implemented',
@@ -44,8 +45,10 @@ router.get('/status', (_req: Request, res: Response) => {
   });
 });
 
-// TODO: Add route groups when implementing features
-// router.use('/auth', authRoutes);
+// Route groups
+router.use('/auth', authRoutes);
+
+// TODO: Add additional route groups when implementing features
 // router.use('/accounts', accountRoutes);
 // router.use('/transactions', transactionRoutes);
 // router.use('/budgets', budgetRoutes);

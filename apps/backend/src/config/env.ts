@@ -29,6 +29,9 @@ export const env = {
   PORT: parseInt(process.env.PORT || '3001'),
   API_PREFIX: process.env.API_PREFIX || '/api',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  // Google OAuth
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
   // Add other required variables as needed
 };
 
@@ -46,6 +49,11 @@ export const databaseConfig = {
 
 export const authConfig = {
   jwtSecret: env.JWT_SECRET,
+  google: {
+    clientId: env.GOOGLE_CLIENT_ID,
+    clientSecret: env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${env.CORS_ORIGIN}/auth/google/callback`,
+  },
 };
 
 export const serverConfig = {

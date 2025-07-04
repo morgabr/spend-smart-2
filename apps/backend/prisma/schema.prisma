@@ -25,6 +25,7 @@ model User {
   // Authentication fields
   passwordHash String?
   emailVerified Boolean @default(false)
+  refreshToken String?
   
   // OAuth fields
   googleId String? @unique

@@ -1,17 +1,19 @@
 // SpendSmart Backend Entry Point
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
+import session from 'express-session';
 import helmet from 'helmet';
-import { serverConfig, corsConfig } from './config/env';
+import { corsConfig, serverConfig } from './config/env';
+import passport from './config/passport';
 import { errorHandler } from './middleware/error-handler';
-import { requestLogger } from './middleware/request-logger';
 import { rateLimiter } from './middleware/rate-limiter';
-import {
-  initializeDatabase,
-  disconnectDatabase,
-  checkDatabaseConnection,
-} from './services/database';
+import { requestLogger } from './middleware/request-logger';
 import apiRoutes from './routes';
+import {
+  checkDatabaseConnection,
+  disconnectDatabase,
+  initializeDatabase,
+} from './services/database';
 
 const app = express();
 
@@ -23,6 +25,23 @@ app.use(rateLimiter);
 // Request parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Session middleware (required for Passport)
+app.use(
+  session({
+    secret: process.env.JWT_SECRET || 'fallback-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    },
+  })
+);
+
+// Passport initialization
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Logging middleware
 app.use(requestLogger);
