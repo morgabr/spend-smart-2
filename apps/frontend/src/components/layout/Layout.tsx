@@ -117,6 +117,7 @@ const Layout: React.FC = () => {
         </svg>
       ),
     };
+
     return icons[iconName as keyof typeof icons];
   };
 
@@ -169,6 +170,7 @@ const Layout: React.FC = () => {
           <nav className='flex-1 px-4 py-4 space-y-2'>
             {navigation.map(item => {
               const isActive = location.pathname === item.href;
+
               return (
                 <Link
                   key={item.name}
@@ -188,13 +190,16 @@ const Layout: React.FC = () => {
             <div className='flex items-center space-x-3 mb-4'>
               <div className='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center'>
                 <span className='text-white font-medium'>
-                  {user?.firstName?.[0]}
-                  {user?.lastName?.[0]}
+                  {user?.name
+                    ?.split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .slice(0, 2)}
                 </span>
               </div>
               <div>
                 <p className='text-sm font-medium text-gray-900 dark:text-white'>
-                  {user?.firstName} {user?.lastName}
+                  {user?.name || 'User'}
                 </p>
                 <p className='text-xs text-gray-500 dark:text-gray-400'>
                   {user?.email}

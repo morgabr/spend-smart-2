@@ -13,7 +13,7 @@ const NotFoundPage: React.FC = () => {
             Page not found
           </h2>
           <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
-            Sorry, we couldn't find the page you're looking for.
+            Sorry, we couldn&apos;t find the page you&apos;re looking for.
           </p>
         </div>
 

@@ -13,9 +13,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
+
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
+
   return context;
 };
 
@@ -28,6 +30,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('theme') as Theme) || 'system';
     }
+
     return 'system';
   });
 
@@ -68,6 +71,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     };
 
     mediaQuery.addEventListener('change', handleChange);
+
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 

@@ -8,7 +8,7 @@ const DashboardPage: React.FC = () => {
           Welcome to your Dashboard
         </h1>
         <p className='text-gray-600 dark:text-gray-400'>
-          Here's an overview of your financial health
+          Here&apos;s an overview of your financial health
         </p>
       </div>
 

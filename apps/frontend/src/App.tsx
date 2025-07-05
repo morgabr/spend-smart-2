@@ -11,6 +11,7 @@ import PublicLayout from './components/layout/PublicLayout';
 // Pages
 import AccountsPage from './pages/AccountsPage';
 import LoginPage from './pages/auth/LoginPage';
+import MagicLinkPage from './pages/auth/MagicLinkPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import BudgetsPage from './pages/BudgetsPage';
 import DashboardPage from './pages/DashboardPage';
@@ -47,6 +48,8 @@ const App: React.FC = () => {
                   <Route index element={<HomePage />} />
                   <Route path='login' element={<LoginPage />} />
                   <Route path='register' element={<RegisterPage />} />
+                  <Route path='auth/magic-link' element={<MagicLinkPage />} />
+                  <Route path='auth/success' element={<MagicLinkPage />} />
                 </Route>
 
                 {/* Protected routes */}

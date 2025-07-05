@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { User, UserRole } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import { authConfig } from '../config/env';
+import { authConfig, serverConfig } from '../config/env';
 import {
   comparePassword,
   generateTokens,
@@ -11,6 +11,7 @@ import {
 } from '../utils/auth';
 import { getDefaultRole } from '../utils/roles';
 import { prisma } from './database';
+import EmailService from './email';
 
 export interface RegisterData {
   email: string;
@@ -49,6 +50,10 @@ export interface GoogleUserData {
   email: string;
   name: string;
   avatar?: string;
+}
+
+export interface MagicLinkData {
+  email: string;
 }
 
 export class AuthService {
@@ -614,6 +619,135 @@ export class AuthService {
       recentRegistrations,
       deactivatedUsers,
     };
+  }
+
+  // Magic link authentication - send magic link
+  static async sendMagicLink(data: MagicLinkData): Promise<void> {
+    const { email } = data;
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      throw new Error('Invalid email format');
+    }
+
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    // If user doesn't exist, create a new one
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          role: getDefaultRole(),
+        },
+      });
+    }
+
+    // Generate magic link token
+    const magicToken = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        type: 'magic_link',
+      },
+      authConfig.magicLink.secret,
+      { expiresIn: authConfig.magicLink.expiresIn } as jwt.SignOptions
+    );
+
+    // Create magic link
+    const magicLink = `${serverConfig.frontendUrl}/auth/magic-link?token=${magicToken}`;
+
+    // Send magic link email
+    await EmailService.sendMagicLinkEmail({
+      email: user.email,
+      magicLink,
+      userName: user.name || undefined,
+    });
+
+    // For new users, also send welcome email
+    if (!user.name) {
+      await EmailService.sendWelcomeEmail(user.email, user.name || 'User');
+    }
+  }
+
+  // Magic link authentication - verify token and login
+  static async verifyMagicLink(token: string): Promise<AuthResult> {
+    try {
+      // Verify magic link token
+      const decoded = jwt.verify(token, authConfig.magicLink.secret) as {
+        userId: string;
+        email: string;
+        type: string;
+      };
+
+      // Check if token is a magic link token
+      if (decoded.type !== 'magic_link') {
+        throw new Error('Invalid token type');
+      }
+
+      // Find user
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Check if user is active
+      if (!user.isActive) {
+        throw new Error('Account is deactivated');
+      }
+
+      // Mark email as verified if not already
+      if (!user.emailVerified) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerified: true },
+        });
+      }
+
+      // Generate tokens
+      const tokens = generateTokens({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      });
+
+      // Store refresh token and update last login
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          refreshToken: tokens.refreshToken,
+          lastLoginAt: new Date(),
+        },
+      });
+
+      // Return user without sensitive data
+      const {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        passwordHash: _,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        refreshToken: __,
+        ...userWithoutSensitiveData
+      } = user;
+
+      return {
+        user: { ...userWithoutSensitiveData, emailVerified: true },
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error('Magic link has expired');
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error('Invalid magic link');
+      }
+      throw error;
+    }
   }
 }
 

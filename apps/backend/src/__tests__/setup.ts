@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { User } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 
 // Mock environment variables
 process.env.NODE_ENV = 'test';
@@ -64,7 +64,7 @@ export const createMockUser = (overrides: Partial<User> = {}): User =>
     email: 'test@example.com',
     name: 'Test User',
     avatar: null,
-    role: 'USER',
+    role: UserRole.USER,
     isActive: true,
     lastLoginAt: new Date(),
     emailVerified: false,

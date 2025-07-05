@@ -32,6 +32,14 @@ const updateProfileSchema = Joi.object({
   timezone: Joi.string().optional(),
 });
 
+const magicLinkSchema = Joi.object({
+  email: Joi.string().email().required(),
+});
+
+const verifyMagicLinkSchema = Joi.object({
+  token: Joi.string().required(),
+});
+
 export class AuthController {
   // POST /api/auth/register
   static async register(req: Request, res: Response): Promise<Response | void> {
@@ -333,6 +341,65 @@ export class AuthController {
   static googleCallbackMiddleware = passport.authenticate('google', {
     failureRedirect: '/login?error=auth_failed',
   });
+
+  // POST /api/auth/magic-link
+  static async sendMagicLink(
+    req: Request,
+    res: Response
+  ): Promise<Response | void> {
+    try {
+      const { error, value } = magicLinkSchema.validate(req.body);
+
+      if (error) {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: error.details[0].message,
+        });
+      }
+
+      await AuthService.sendMagicLink(value);
+
+      res.json({
+        message: 'Magic link sent successfully',
+      });
+    } catch (error) {
+      console.error('Magic link error:', error);
+      res.status(400).json({
+        error: 'Failed to send magic link',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  // POST /api/auth/magic-link/verify
+  static async verifyMagicLink(
+    req: Request,
+    res: Response
+  ): Promise<Response | void> {
+    try {
+      const { error, value } = verifyMagicLinkSchema.validate(req.body);
+
+      if (error) {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: error.details[0].message,
+        });
+      }
+
+      const result = await AuthService.verifyMagicLink(value.token);
+
+      res.json({
+        message: 'Magic link verified successfully',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Magic link verification error:', error);
+      res.status(401).json({
+        error: 'Magic link verification failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
 }
 
 export default AuthController;

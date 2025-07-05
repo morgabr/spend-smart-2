@@ -9,6 +9,10 @@ router.post('/register', AuthController.register);
 router.post('/login', AuthController.login);
 router.post('/refresh', AuthController.refreshToken);
 
+// Magic link authentication routes
+router.post('/magic-link', AuthController.sendMagicLink);
+router.post('/magic-link/verify', AuthController.verifyMagicLink);
+
 // Google OAuth routes
 router.get('/google', AuthController.googleAuth);
 router.get(

@@ -4,16 +4,15 @@ import { useNavigate } from 'react-router-dom';
 interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  avatar?: string;
+  name: string | null;
+  avatar?: string | null;
   emailVerified: boolean;
+  role: string;
+  isActive: boolean;
+  baseCurrency: string;
+  timezone: string;
   createdAt: string;
-  preferences?: {
-    currency?: string;
-    timezone?: string;
-    notifications?: boolean;
-  };
+  updatedAt: string;
 }
 
 interface AuthContextType {
@@ -21,12 +20,10 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string
-  ) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  sendMagicLink: (email: string) => Promise<void>;
+  verifyMagicLink: (token: string) => Promise<void>;
+  loginWithGoogle: () => void;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   refreshToken: () => Promise<void>;
@@ -36,9 +33,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 };
 
@@ -53,24 +52,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const isAuthenticated = !!user;
 
+  // API base URL
+  const API_BASE = '/api/auth';
+
   // Check for existing token on mount
   useEffect(() => {
     const token = localStorage.getItem('authToken');
+
     if (token) {
-      // TODO: Validate token and fetch user data
-      // For now, we'll just set loading to false
-      setIsLoading(false);
+      // Validate token and fetch user data
+      fetchUserProfile();
     } else {
       setIsLoading(false);
     }
   }, []);
 
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/me`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        setUser(data.data);
+      } else {
+        // Token is invalid, clear it
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
 
-      // TODO: Implement actual API call
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,16 +106,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Login failed');
+        const errorData = await response.json();
+
+        throw new Error(errorData.message || 'Login failed');
       }
 
       const data = await response.json();
 
-      // Store token
-      localStorage.setItem('authToken', data.token);
+      // Store tokens
+      localStorage.setItem('authToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
 
       // Set user data
-      setUser(data.user);
+      setUser(data.data.user);
 
       // Navigate to dashboard
       navigate('/app/dashboard');
@@ -103,14 +133,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (
     email: string,
     password: string,
-    firstName: string,
-    lastName: string
+    name: string
   ): Promise<void> => {
     try {
       setIsLoading(true);
 
-      // TODO: Implement actual API call
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,22 +146,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({
           email,
           password,
-          firstName,
-          lastName,
+          name,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Registration failed');
+        const errorData = await response.json();
+
+        throw new Error(errorData.message || 'Registration failed');
       }
 
       const data = await response.json();
 
-      // Store token
-      localStorage.setItem('authToken', data.token);
+      // Store tokens
+      localStorage.setItem('authToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
 
       // Set user data
-      setUser(data.user);
+      setUser(data.data.user);
 
       // Navigate to dashboard
       navigate('/app/dashboard');
@@ -145,8 +175,95 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const sendMagicLink = async (email: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(`${API_BASE}/magic-link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        throw new Error(errorData.message || 'Failed to send magic link');
+      }
+
+      // Success - magic link sent
+    } catch (error) {
+      console.error('Magic link error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyMagicLink = async (token: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(`${API_BASE}/magic-link/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        throw new Error(errorData.message || 'Magic link verification failed');
+      }
+
+      const data = await response.json();
+
+      // Store tokens
+      localStorage.setItem('authToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
+
+      // Set user data
+      setUser(data.data.user);
+
+      // Navigate to dashboard
+      navigate('/app/dashboard');
+    } catch (error) {
+      console.error('Magic link verification error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithGoogle = () => {
+    // Redirect to Google OAuth
+    window.location.href = `${API_BASE}/google`;
+  };
+
+  const logout = async () => {
+    try {
+      // Call logout endpoint to invalidate refresh token
+      const token = localStorage.getItem('authToken');
+
+      if (token) {
+        await fetch(`${API_BASE}/logout`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    // Clear local state and storage
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     setUser(null);
     navigate('/');
   };
@@ -155,9 +272,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
 
-      // TODO: Implement actual API call
-      const response = await fetch('/api/auth/profile', {
-        method: 'PATCH',
+      const response = await fetch(`${API_BASE}/profile`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,
@@ -166,11 +282,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Profile update failed');
+        const errorData = await response.json();
+
+        throw new Error(errorData.message || 'Profile update failed');
       }
 
       const data = await response.json();
-      setUser(data.user);
+
+      setUser(data.data);
     } catch (error) {
       console.error('Profile update error:', error);
       throw error;
@@ -181,23 +300,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshToken = async (): Promise<void> => {
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
+      const refreshTokenValue = localStorage.getItem('refreshToken');
 
-      // TODO: Implement actual API call
-      const response = await fetch('/api/auth/refresh', {
+      if (!refreshTokenValue) return;
+
+      const response = await fetch(`${API_BASE}/refresh`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ refreshToken: refreshTokenValue }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('authToken', data.token);
-        setUser(data.user);
+
+        localStorage.setItem('authToken', data.data.accessToken);
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+        setUser(data.data.user);
       } else {
-        // Token is invalid, log out
+        // Refresh failed, log out
         logout();
       }
     } catch (error) {
@@ -206,12 +328,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const value: AuthContextType = {
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const refreshTokenFromUrl = urlParams.get('refresh');
+
+    if (token && refreshTokenFromUrl) {
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('refreshToken', refreshTokenFromUrl);
+      fetchUserProfile();
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const value = {
     user,
     isLoading,
     isAuthenticated,
     login,
     register,
+    sendMagicLink,
+    verifyMagicLink,
+    loginWithGoogle,
     logout,
     updateProfile,
     refreshToken,
